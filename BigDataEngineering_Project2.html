@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project #2 — E-Commerce Behavioral Analytics & Recommendation Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0d0f14;
+    --surface:  #13161e;
+    --surface2: #1c202c;
+    --border:   #252a38;
+    --amber:    #f59e0b;
+    --amber2:   #fbbf24;
+    --cyan:     #22d3ee;
+    --green:    #34d399;
+    --red:      #f87171;
+    --purple:   #a78bfa;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --dim:      #94a3b8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ─── GRAIN OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: .5;
+  }
+
+  .page-wrap {
+    position: relative; z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  /* ─── HEADER ─── */
+  .doc-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 32px;
+    margin-bottom: 48px;
+  }
+
+  .doc-meta {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .doc-meta span { color: var(--amber); }
+  .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border); }
+
+  h1 {
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.02em;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--amber);
+  }
+
+  .tagline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: .04em;
+  }
+
+  .badge-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 24px;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .badge-amber { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.25); }
+  .badge-cyan  { background: rgba(34,211,238,.10);  color: var(--cyan);  border: 1px solid rgba(34,211,238,.2); }
+  .badge-green { background: rgba(52,211,153,.10);  color: var(--green); border: 1px solid rgba(52,211,153,.2); }
+
+  /* ─── OVERVIEW CARD ─── */
+  .overview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 48px;
+  }
+
+  .overview p { color: var(--dim); line-height: 1.8; }
+
+  .warning-box {
+    background: rgba(248,113,113,.07);
+    border: 1px solid rgba(248,113,113,.2);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-top: 16px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+
+  .warning-box .icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+  .warning-box p { color: #fca5a5; font-size: 13px; line-height: 1.65; }
+
+  .warning-box strong { color: #f87171; }
+
+  /* ─── TECH STACK ─── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 52px;
+  }
+
+  .tech-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .tech-card:hover {
+    border-color: var(--amber);
+    transform: translateY(-2px);
+  }
+
+  .tech-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .tech-card.spark::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .tech-card.nosql::before { background: linear-gradient(90deg, #22d3ee, #67e8f9); }
+  .tech-card.data::before  { background: linear-gradient(90deg, #34d399, #6ee7b7); }
+
+  .tech-icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .tech-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .tech-value {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .tech-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ─── SECTION TITLES ─── */
+  .section-title {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .section-title h2 {
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── PIPELINE VISUAL ─── */
+  .pipeline-container {
+    margin-bottom: 52px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px 24px;
+    overflow-x: auto;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: 680px;
+  }
+
+  .pipe-block {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+    position: relative;
+    transition: border-color .2s;
+  }
+
+  .pipe-block:hover { border-color: var(--amber); }
+
+  .pipe-block .phase-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .pipe-block .phase-icon { font-size: 26px; margin-bottom: 8px; }
+
+  .pipe-block .phase-name {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .pipe-block .phase-tasks {
+    display: flex; flex-direction: column; gap: 5px;
+    text-align: left;
+  }
+
+  .task-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+
+  .phase-1 .phase-num,
+  .phase-1 .task-pill { color: var(--amber); }
+  .phase-1 .task-pill { border-color: rgba(245,158,11,.25); background: rgba(245,158,11,.05); }
+
+  .phase-2 .phase-num,
+  .phase-2 .task-pill { color: var(--cyan); }
+  .phase-2 .task-pill { border-color: rgba(34,211,238,.2); background: rgba(34,211,238,.05); }
+
+  .phase-3 .phase-num,
+  .phase-3 .task-pill { color: var(--green); }
+  .phase-3 .task-pill { border-color: rgba(52,211,153,.2); background: rgba(52,211,153,.05); }
+
+  .pipe-arrow {
+    flex-shrink: 0;
+    width: 40px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--border);
+    font-size: 18px;
+  }
+
+  /* ─── DATA FLOW ROW ─── */
+  .flow-row {
+    display: flex; flex-wrap: nowrap; overflow-x: auto;
+    gap: 0;
+    align-items: center;
+    margin-top: 20px;
+    padding: 16px 0 4px;
+    border-top: 1px solid var(--border);
+  }
+
+  .flow-node {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .flow-node .fn-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    white-space: nowrap;
+  }
+
+  .flow-node .fn-label {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 5px;
+  }
+
+  .flow-sep {
+    flex-shrink: 0;
+    display: flex; align-items: center;
+    padding: 0 6px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* ─── PHASES DETAIL ─── */
+  .phase-section {
+    margin-bottom: 44px;
+  }
+
+  .phase-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .phase-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .ph1 { background: rgba(245,158,11,.12); color: var(--amber); border: 1px solid rgba(245,158,11,.3); }
+  .ph2 { background: rgba(34,211,238,.1);  color: var(--cyan);  border: 1px solid rgba(34,211,238,.25); }
+  .ph3 { background: rgba(52,211,153,.1);  color: var(--green); border: 1px solid rgba(52,211,153,.25); }
+
+  .phase-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+  }
+
+  .task-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+  }
+
+  .task-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .task-block h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .kv-grid {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 10px 16px;
+    margin-bottom: 14px;
+  }
+
+  .kv-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding-top: 2px;
+  }
+
+  .kv-val { font-size: 13px; color: var(--dim); line-height: 1.6; }
+
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 13px; color: var(--dim);
+    line-height: 1.6;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step-list li:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 7px;
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ─── DELIVERABLES ─── */
+  .deliverables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 52px;
+  }
+
+  .del-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px;
+    transition: border-color .2s, transform .2s;
+  }
+
+  .del-card:hover {
+    border-color: var(--amber);
+    transform: translateY(-2px);
+  }
+
+  .del-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--border);
+    margin-bottom: 14px;
+    line-height: 1;
+  }
+
+  .del-icon { font-size: 22px; margin-bottom: 10px; }
+
+  .del-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .del-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .del-ext {
+    display: inline-block;
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    background: rgba(245,158,11,.1);
+    color: var(--amber);
+    border: 1px solid rgba(245,158,11,.2);
+  }
+
+  /* ─── FLOW DIAGRAM SVG ─── */
+  .flow-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 52px;
+    overflow-x: auto;
+  }
+
+  .flow-diagram h3 {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* ─── FOOTER ─── */
+  .doc-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+
+  .doc-footer p {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .doc-footer span { color: var(--amber); }
+
+  /* ─── CHOICE BOX ─── */
+  .choice-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .choice-opt {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .choice-opt .co-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .choice-opt .co-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .choice-opt .co-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  .mongo .co-name { color: #4db33d; }
+  .redis .co-name { color: #dc382c; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .doc-header { animation: fade-up .5s ease both; }
+  .overview   { animation: fade-up .5s .1s ease both; }
+  .tech-grid  { animation: fade-up .5s .18s ease both; }
+  .pipeline-container { animation: fade-up .5s .25s ease both; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--amber2);
+  }
+
+  @media (max-width: 600px) {
+    .page-wrap { padding: 28px 18px 60px; }
+    .choice-box { grid-template-columns: 1fr; }
+    .kv-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="doc-header">
+    <div class="doc-meta">
+      <span>EUI · Spring 2026</span>
+      <div class="dot"></div>
+      Big Data Engineering
+      <div class="dot"></div>
+      Project #2
+    </div>
+    <h1>E-Commerce Behavioral Analytics<br>&amp; <em>Recommendation Engine</em></h1>
+    <p class="tagline">// end-to-end pipeline: raw logs → NoSQL profiles → targeted campaign</p>
+
+    <div class="badge-row">
+      <div class="badge badge-amber">⚡ Apache Spark</div>
+      <div class="badge badge-cyan">🗄 MongoDB / Redis</div>
+      <div class="badge badge-green">📦 10 GB+ Dataset</div>
+      <div class="badge badge-amber">3 Phases · 4 Tasks</div>
+    </div>
+  </header>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div class="overview">
+    <p>Step into the role of a <strong style="color:var(--text)">Data Engineer at a high-growth e-commerce startup</strong>. The company has accumulated a massive archive of raw, unstructured web-server logs detailing user interactions — clicks, views, cart additions, and purchases. Your objective is to build an <strong style="color:var(--amber)">interconnected, end-to-end data pipeline</strong> across three phases: distributed processing with Spark, NoSQL storage for real-time querying, and an enrichment layer that powers a targeted marketing campaign.</p>
+
+    <div class="warning-box">
+      <div class="icon">⚠️</div>
+      <p>The raw dataset is <strong>significantly larger than available RAM</strong>. Standard iterative loops or in-memory libraries like Pandas will crash with an OOM error. You <strong>must</strong> use Apache Spark and strictly apply the <strong>MapReduce paradigm</strong> to distribute computation across CPU cores.</p>
+    </div>
+  </div>
+
+  <!-- ═══ TECH STACK ═══ -->
+  <div class="section-title"><h2>Tech Stack</h2></div>
+  <div class="tech-grid">
+    <div class="tech-card spark">
+      <div class="tech-icon">⚡</div>
+      <div class="tech-label">Processing</div>
+      <div class="tech-value">Apache Spark</div>
+      <div class="tech-sub">PySpark · Scala · local[*]</div>
+    </div>
+    <div class="tech-card nosql">
+      <div class="tech-icon">🗄</div>
+      <div class="tech-label">Storage</div>
+      <div class="tech-value">NoSQL Database</div>
+      <div class="tech-sub">MongoDB or Redis · Docker</div>
+    </div>
+    <div class="tech-card data">
+      <div class="tech-icon">📂</div>
+      <div class="tech-label">Dataset</div>
+      <div class="tech-value">10 GB+ Raw Logs</div>
+      <div class="tech-sub">CSV / JSON · eCommerce events</div>
+    </div>
+  </div>
+
+  <!-- ═══ PIPELINE VISUAL ═══ -->
+  <div class="section-title"><h2>Project Pipeline</h2></div>
+  <div class="pipeline-container">
+    <div class="pipeline">
+
+      <!-- INPUT -->
+      <div class="pipe-block" style="max-width:120px; flex:0 0 auto; border-color: rgba(100,116,139,.3)">
+        <div class="phase-num">Input</div>
+        <div class="phase-icon">📄</div>
+        <div class="phase-name" style="font-size:12px; color:var(--muted)">Raw Web<br>Server Logs</div>
+        <div class="phase-tasks" style="margin-top:8px">
+          <div class="task-pill" style="color:var(--muted); background:var(--bg); border-color:var(--border)">CSV / JSON</div>
+          <div class="task-pill" style="color:var(--muted); background:var(--bg); border-color:var(--border)">10 GB+</div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <!-- PHASE 1 -->
+      <div class="pipe-block phase-1">
+        <div class="phase-num">Phase 01</div>
+        <div class="phase-icon">⚡</div>
+        <div class="phase-name">Distributed<br>Processing</div>
+        <div class="phase-tasks">
+          <div class="task-pill">1.1 Market Basket</div>
+          <div class="task-pill">1.2 User Affinity</div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <!-- PHASE 2 -->
+      <div class="pipe-block phase-2">
+        <div class="phase-num">Phase 02</div>
+        <div class="phase-icon">🗄</div>
+        <div class="phase-name">NoSQL<br>Storage</div>
+        <div class="phase-tasks">
+          <div class="task-pill">2.1 Schema Design</div>
+          <div class="task-pill">2.2 Data Ingestion</div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <!-- PHASE 3 -->
+      <div class="pipe-block phase-3">
+        <div class="phase-num">Phase 03</div>
+        <div class="phase-icon">🎯</div>
+        <div class="phase-name">Enrichment<br>Pipeline</div>
+        <div class="phase-tasks">
+          <div class="task-pill">3.1 NoSQL → Spark</div>
+          <div class="task-pill">Cart Abandonment</div>
+        </div>
+      </div>
+
+      <div class="pipe-arrow">→</div>
+
+      <!-- OUTPUT -->
+      <div class="pipe-block" style="max-width:130px; flex:0 0 auto; border-color:rgba(52,211,153,.3)">
+        <div class="phase-num" style="color:var(--green)">Output</div>
+        <div class="phase-icon">📧</div>
+        <div class="phase-name" style="font-size:12px; color:var(--green)">Marketing<br>Campaign</div>
+        <div class="phase-tasks" style="margin-top:8px">
+          <div class="task-pill" style="color:var(--green); background:rgba(52,211,153,.06); border-color:rgba(52,211,153,.2)">High Discount</div>
+          <div class="task-pill" style="color:var(--green); background:rgba(52,211,153,.06); border-color:rgba(52,211,153,.2)">Std. Reminder</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Data Flow row -->
+    <div class="flow-row">
+      <div class="flow-node">
+        <div class="fn-box">click / view / cart / purchase</div>
+        <div class="fn-label">raw events</div>
+      </div>
+      <div class="flow-sep">→</div>
+      <div class="flow-node">
+        <div class="fn-box">map(session, items) → reduce(pair, count)</div>
+        <div class="fn-label">MapReduce</div>
+      </div>
+      <div class="flow-sep">→</div>
+      <div class="flow-node">
+        <div class="fn-box">{ user_id: …, top_categories: […] }</div>
+        <div class="fn-label">NoSQL profiles</div>
+      </div>
+      <div class="flow-sep">→</div>
+      <div class="flow-node">
+        <div class="fn-box">cart_abandon ∩ user_profile → flag</div>
+        <div class="fn-label">Spark join</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 1 ═══ -->
+  <div class="section-title"><h2>Phase Details</h2></div>
+
+  <div class="phase-section">
+    <div class="phase-header">
+      <div class="phase-badge ph1">Phase 01</div>
+      <h3>Distributed Data Processing — The MapReduce Paradigm</h3>
+    </div>
+
+    <div class="task-block">
+      <div class="task-id">Task 1.1</div>
+      <h4>Market Basket Analysis — Item Co-occurrence</h4>
+      <div class="kv-grid">
+        <div class="kv-key">Objective</div>
+        <div class="kv-val">Determine which items are most frequently purchased together in the same session across the entire dataset.</div>
+        <div class="kv-key">Requirement</div>
+        <div class="kv-val">Formulate a <strong style="color:var(--amber)">MapReduce strategy</strong> that groups items from the same session and reduces them to find the global frequency of co-purchased pairs.</div>
+        <div class="kv-key">Map Step</div>
+        <div class="kv-val">Emit <code>(session_id, item_id)</code> pairs for every purchase event in the log.</div>
+        <div class="kv-key">Reduce Step</div>
+        <div class="kv-val">Group by session, generate all item pairs, count global frequency of each pair.</div>
+      </div>
+    </div>
+
+    <div class="task-block">
+      <div class="task-id">Task 1.2</div>
+      <h4>User Affinity Aggregation</h4>
+      <div class="kv-grid">
+        <div class="kv-key">Objective</div>
+        <div class="kv-val">Build a behavioral profile for each user based on their historical actions.</div>
+        <div class="kv-key">Requirement</div>
+        <div class="kv-val">Apply MapReduce to assign <strong style="color:var(--amber)">weighted scores</strong> to different user events and aggregate per user.</div>
+        <div class="kv-key">Weights</div>
+        <div class="kv-val">
+          <code>View = 1</code>&nbsp;&nbsp;<code>Cart = 3</code>&nbsp;&nbsp;<code>Purchase = 5</code>
+        </div>
+        <div class="kv-key">Output</div>
+        <div class="kv-val">Each user's top-affinity product categories ranked by weighted score sum.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 2 ═══ -->
+  <div class="phase-section">
+    <div class="phase-header">
+      <div class="phase-badge ph2">Phase 02</div>
+      <h3>NoSQL Data Modeling &amp; Storage</h3>
+    </div>
+
+    <div class="task-block">
+      <div class="task-id">Tasks 2.1 &amp; 2.2</div>
+      <h4>Schema Design &amp; Data Ingestion</h4>
+      <div class="kv-grid">
+        <div class="kv-key">Objective</div>
+        <div class="kv-val">Design a data model optimized for <strong style="color:var(--cyan)">instant lookups</strong> in real-time web recommendation queries, then load Phase 1 output into it.</div>
+        <div class="kv-key">Constraint</div>
+        <div class="kv-val">Relational databases are unsuited for the read-heavy, low-latency requirements of the web frontend. A NoSQL approach is mandatory.</div>
+      </div>
+
+      <div class="choice-box">
+        <div class="choice-opt mongo">
+          <div class="co-label">Option A</div>
+          <div class="co-name">MongoDB</div>
+          <div class="co-desc">Design a <strong>denormalized document schema</strong>. Embed top categories and co-occurrence data directly into user documents for single-query retrieval.</div>
+        </div>
+        <div class="choice-opt redis">
+          <div class="co-label">Option B</div>
+          <div class="co-name">Redis</div>
+          <div class="co-desc">Define a <strong>Key-Value naming convention</strong> and leverage appropriate data structures — Strings, Hashes, or Sorted Sets for ranked affinities.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 3 ═══ -->
+  <div class="phase-section">
+    <div class="phase-header">
+      <div class="phase-badge ph3">Phase 03</div>
+      <h3>Data Enrichment &amp; The Interconnected Pipeline</h3>
+    </div>
+
+    <div class="task-block">
+      <div class="task-id">Task 3.1</div>
+      <h4>NoSQL-to-Spark Integration — Cart Abandonment Recovery</h4>
+      <div class="kv-grid">
+        <div class="kv-key">Goal</div>
+        <div class="kv-val">The marketing team wants to send <strong style="color:var(--green)">high-value discount codes</strong> only when the abandoned item belongs to a user's top affinity categories — saving budget by targeting intelligently.</div>
+      </div>
+
+      <ul class="step-list" style="margin-top:14px">
+        <li>
+          <div class="step-num">01</div>
+          <div>Read a new batch of raw logs using Spark and <strong style="color:var(--text)">filter for users</strong> who added an item to their cart but did <em>not</em> trigger a <code>purchase</code> event in that session.</div>
+        </li>
+        <li>
+          <div class="step-num">02</div>
+          <div>Configure Spark to <strong style="color:var(--text)">query historical User Profiles</strong> directly from your chosen NoSQL database (MongoDB connector or Redis client).</div>
+        </li>
+        <li>
+          <div class="step-num">03</div>
+          <div><strong style="color:var(--text)">Join the two datasets</strong> using Spark transformations. If the abandoned item's category matches one of the user's top categories → flag <code style="color:var(--amber)">High_Discount</code>. Otherwise → flag <code style="color:var(--cyan)">Standard_Reminder</code>.</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ DELIVERABLES ═══ -->
+  <div class="section-title"><h2>Deliverables</h2></div>
+  <div class="deliverables-grid">
+
+    <div class="del-card">
+      <div class="del-num">01</div>
+      <div class="del-icon">📝</div>
+      <div class="del-title">Source Code</div>
+      <div class="del-body">Spark scripts for Phase 1 and Phase 3, clearly demonstrating the Map and Reduce transformations used to achieve each objective.</div>
+      <div class="del-ext">.py · .scala</div>
+    </div>
+
+    <div class="del-card">
+      <div class="del-num">02</div>
+      <div class="del-icon">📐</div>
+      <div class="del-title">Architecture &amp; Schema Document</div>
+      <div class="del-body">Diagram or JSON/Key-Space documentation of your NoSQL schema, plus a written justification of your database choice over a SQL table.</div>
+      <div class="del-ext">.pdf</div>
+    </div>
+
+    <div class="del-card">
+      <div class="del-num">03</div>
+      <div class="del-icon">🔍</div>
+      <div class="del-title">Query Demo Script</div>
+      <div class="del-body">A standalone script that connects to your local NoSQL database and fetches recommendations for a given <code>user_id</code> and <code>item_id</code> — proving instant lookup capability.</div>
+      <div class="del-ext">.py · .js · any</div>
+    </div>
+
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="doc-footer">
+    <p>Egypt University of Informatics · <span>Big Data Engineering</span> · Spring 2026</p>
+    <p style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted)">Project #2 — v1.0</p>
+  </footer>
+
+</div>
+</body>
+</html>
