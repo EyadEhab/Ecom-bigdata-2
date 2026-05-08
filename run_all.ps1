@@ -8,8 +8,8 @@ param(
 
 function Run-InContainer {
     param([string]$Cmd)
-    docker exec $Container $Cmd
-    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+    cmd /c "docker exec $Container $Cmd"
+    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; try { Read-Host "Press Enter to exit" } catch {}; exit 1 }
 }
 
 $Start = Get-Date
@@ -41,3 +41,4 @@ $Elapsed = (Get-Date) - $Start
 Write-Host "`n========================================" -ForegroundColor Green
 Write-Host "  Pipeline complete in $($Elapsed.TotalMinutes.ToString('F1')) min" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
+try { Read-Host "`nPress Enter to exit" } catch {}
