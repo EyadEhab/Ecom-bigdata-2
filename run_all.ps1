@@ -1,41 +1,40 @@
 param(
-    [string]$SparkSubmit = "spark-submit",
-    [string]$Python = "python",
-    [string]$DataDir = "Dataset",
-    [string]$OutputDir = "output",
+    [string]$Container = "ecom-bigdata-2-spark-master-1",
+    [string]$MongoContainer = "ecom-bigdata-2-mongodb-1",
     [switch]$SkipPhase1,
     [switch]$SkipPhase2,
     [switch]$SkipPhase3
 )
 
-$Scripts = "scripts"
+function Run-InContainer {
+    param([string]$Cmd)
+    docker exec $Container $Cmd
+    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+}
+
 $Start = Get-Date
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  E-Commerce Behavioral Analytics" -ForegroundColor Cyan
-Write-Host "  Full Pipeline Execution" -ForegroundColor Cyan
+Write-Host "  Full Pipeline via Docker" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 if (-not $SkipPhase1) {
     Write-Host "`n[Phase 1.1] Market Basket Analysis..." -ForegroundColor Yellow
-    & $SparkSubmit --master local[*] "$Scripts\phase1_market_basket.py"
-    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+    Run-InContainer "/opt/spark/bin/spark-submit --master local[*] /opt/spark/scripts/phase1_market_basket.py"
 
     Write-Host "`n[Phase 1.2] User Affinity Aggregation..." -ForegroundColor Yellow
-    & $SparkSubmit --master local[*] "$Scripts\phase1.2_user_affinity.py"
-    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+    Run-InContainer "/opt/spark/bin/spark-submit --master local[*] /opt/spark/scripts/phase1.2_user_affinity.py"
 }
 
 if (-not $SkipPhase2) {
     Write-Host "`n[Phase 2] Ingesting into MongoDB..." -ForegroundColor Yellow
-    & $Python "$Scripts\phase2_mongodb_ingest.py"
-    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+    Run-InContainer "python3 /opt/spark/scripts/phase2_mongodb_ingest.py"
 }
 
 if (-not $SkipPhase3) {
     Write-Host "`n[Phase 3] Cart Abandonment Recovery..." -ForegroundColor Yellow
-    & $SparkSubmit --master local[*] --driver-memory 4g "$Scripts\phase3_cart_abandonment.py"
-    if ($LASTEXITCODE -ne 0) { Write-Host "FAILED" -ForegroundColor Red; exit 1 }
+    Run-InContainer "/opt/spark/bin/spark-submit --master local[*] --driver-memory 4g /opt/spark/scripts/phase3_cart_abandonment.py"
 }
 
 $Elapsed = (Get-Date) - $Start
