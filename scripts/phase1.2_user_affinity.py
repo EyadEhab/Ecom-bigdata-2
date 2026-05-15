@@ -32,7 +32,7 @@ user_affinity = user_category_scores \
         "rank",
         F.row_number().over(Window.partitionBy("user_id").orderBy(F.col("score").desc()))
     ) \
-    .filter(F.col("rank") <= 5) \
+    .filter(F.col("rank") <= 3) \
     .groupBy("user_id") \
     .agg(
         F.collect_list(

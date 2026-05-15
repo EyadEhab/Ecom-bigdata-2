@@ -70,12 +70,12 @@ campaign = spark.sql("""
     INNER JOIN profiles p ON c.user_id = p.user_id
 """)
 
-campaign.write \
+campaign.coalesce(2).write \
     .mode("overwrite") \
     .option("header", "true") \
-    .csv("/tmp/campaign_output")
+    .csv("/opt/spark/output/campaign")
 
-result = spark.read.csv("/tmp/campaign_output", header=True)
+result = spark.read.csv("/opt/spark/output/campaign", header=True)
 result.groupBy("campaign_type").count().show()
 print(f"Total targets: {result.count()}")
 result.show(5, truncate=False)

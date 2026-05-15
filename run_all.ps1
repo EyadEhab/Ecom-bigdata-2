@@ -21,7 +21,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 
 if (-not $SkipPhase1) {
     Write-Host "`n[Phase 1.1] Market Basket Analysis..." -ForegroundColor Yellow
-    Run-InContainer "/opt/spark/bin/spark-submit --master local[*] /opt/spark/scripts/phase1_market_basket.py"
+    Run-InContainer "/opt/spark/bin/spark-submit --master local[*] /opt/spark/scripts/phase1.1_market_basket.py"
 
     Write-Host "`n[Phase 1.2] User Affinity Aggregation..." -ForegroundColor Yellow
     Run-InContainer "/opt/spark/bin/spark-submit --master local[*] /opt/spark/scripts/phase1.2_user_affinity.py"
