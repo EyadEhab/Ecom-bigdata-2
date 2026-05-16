@@ -29,7 +29,7 @@ def query_item_pairs(product_id):
 
     pairs = list(db.item_pairs.find(
         {"$or": [{"item_a": product_id}, {"item_b": product_id}]}
-    ).sort("co_count", -1).limit(5))
+    ).sort("co_count", -1))
 
     if not pairs:
         print(f"\n  No co-occurrence data for '{product_id}'.")
