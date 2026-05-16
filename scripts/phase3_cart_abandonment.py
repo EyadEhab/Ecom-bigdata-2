@@ -42,6 +42,8 @@ cart_events = spark.sql("""
     INNER JOIN abandoned a ON l.session_id = a.session_id
     WHERE l.event_type = 'cart'
       AND l.user_id IS NOT NULL
+      AND l.product_id IS NOT NULL
+      AND l.product_id != ''
       AND get_json_object(l.product_metadata, '$.category') IS NOT NULL
 """)
 
